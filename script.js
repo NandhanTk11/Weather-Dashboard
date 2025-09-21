@@ -25,6 +25,31 @@ let forecastData = null;
 let currentDayIndex = 0;
 
 /**
+ * Gets user's current location
+ * @returns {Promise<{lat: number, lon: number}>}
+ */
+async function getCurrentLocation() {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error('Geolocation is not supported by your browser'));
+      return;
+    }
+    
+    navigator.geolocation.getCurrentPosition(
+      position => {
+        resolve({
+          lat: position.coords.latitude,
+          lon: position.coords.longitude
+        });
+      },
+      () => {
+        reject(new Error('Unable to get location. Using default city.'));
+      }
+    );
+  });
+}
+
+/**
  * Groups weather forecast data by day
  * @param {Array} list - List of weather forecasts
  * @returns {Object} Grouped forecasts by date
@@ -54,6 +79,8 @@ function displayWeather() {
   // Update navigation buttons
   controls.prevDayBtn.disabled = currentDayIndex === 0;
   controls.nextDayBtn.disabled = currentDayIndex === days.length - 1;
+  controls.prevDayBtn.style.opacity = currentDayIndex === 0 ? '0.5' : '1';
+  controls.nextDayBtn.style.opacity = currentDayIndex === days.length - 1 ? '0.5' : '1';
   
   // Update day display
   if (currentDayIndex === 0) {
@@ -197,12 +224,24 @@ controls.nextDayBtn.addEventListener("click", () => {
   });
 }
 
-// Auto-load for current location
-window.addEventListener("load", () => {
-  if (!navigator.geolocation) {
-    fetchWeather("Dubai");
-    return;
+// Initialize weather app
+async function initWeather() {
+  try {
+    weatherElements.message.textContent = 'Getting your location...';
+    const location = await getCurrentLocation();
+    const response = await fetch(
+      `${WEATHER_API_BASE_URL}/weather?lat=${location.lat}&lon=${location.lon}&appid=${config.apiKey}`
+    );
+    const data = await response.json();
+    fetchWeather(data.name);
+  } catch (error) {
+    console.warn('Falling back to default city:', error);
+    fetchWeather(DEFAULT_CITY);
   }
+}
+
+// Initialize on page load
+window.addEventListener("load", initWeather);
 
   navigator.geolocation.getCurrentPosition(
     async (position) => {
