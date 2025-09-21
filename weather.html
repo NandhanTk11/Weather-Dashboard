@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weather Details</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container center">
+    <h1 class="page-title">Today's Weather</h1>
+
+    <!-- Weather Card -->
+    <div class="card weather-card">
+      <img id="weather-icon" src="" alt="Weather Icon" class="weather-icon">
+      <h2 id="city-name">Fetching...</h2>
+      <p id="temperature">--°C</p>
+      <p id="condition">Loading...</p>
+      <p id="caption"></p>
+
+      <!-- Day Display -->
+      <p id="day-display">Day: Loading...</p>
+
+      <!-- Previous Day Button (inside card) -->
+      <button class="btn round-btn-left" id="prevDayBtn">⬅</button>
+      <!-- Next Day Button (inside card) -->
+      <button class="btn round-btn-right" id="nextDayBtn">➡</button>
+    </div>
+
+    <!-- Search Other City -->
+    <div class="search-box">
+      <input type="text" id="cityInput" placeholder="Enter city name">
+      <button class="btn secondary-btn" id="searchBtn">Search</button>
+    </div>
+
+    <!-- Travel Session Button -->
+    <button class="btn primary-btn" onclick="location.href='travel.html'">
+      Travel Session
+    </button>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

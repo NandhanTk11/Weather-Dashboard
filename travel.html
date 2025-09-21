@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Travel Suggestion</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container center">
+    <h1 class="page-title">Travel Suggestion</h1>
+
+    <!-- City Input -->
+    <div class="search-box">
+      <input type="text" id="travelCityInput" placeholder="Enter your travel city name">
+      <button class="btn secondary-btn" id="travelSearchBtn">Check</button>
+    </div>
+
+    <!-- Travel Message Card -->
+    <div class="card travel-card">
+      <p id="travelMessage">Enter a city to get travel suggestion...</p>
+    </div>
+
+    <!-- Back to Weather -->
+    <button class="btn secondary-btn" onclick="location.href='weather.html'">
+      ⬅ Back to Weather
+    </button>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

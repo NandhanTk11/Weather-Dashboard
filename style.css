@@ -1,0 +1,163 @@
+/* ===== General Reset ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* ===== Page Layout ===== */
+body {
+  background: linear-gradient(135deg, #3965d5, #9face6);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 20px;
+}
+
+.container {
+  max-width: 450px;
+  width: 100%;
+}
+
+.center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+/* ===== Titles ===== */
+.app-title, .page-title {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 1px 1px 4px rgba(0,0,0,0.3);
+}
+
+/* ===== Cards ===== */
+.card {
+  background: #fff;
+  padding: 25px;
+  border-radius: 15px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+  width: 100%;
+  position: relative;
+}
+
+.weather-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.travel-card {
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: #333;
+}
+
+/* ===== Weather Elements ===== */
+.weather-icon {
+  width: 80px;
+  height: 80px;
+}
+
+#temperature {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #444;
+}
+
+#condition, #caption {
+  font-size: 1rem;
+  color: #555;
+}
+
+/* ===== Buttons ===== */
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: 0.3s ease;
+}
+
+.primary-btn {
+  background: #0f2136;
+  color: #fff;
+}
+.primary-btn:hover {
+  background: #17314c;
+}
+
+.secondary-btn {
+  background: #f0f0f0;
+  color: #333;
+}
+.secondary-btn:hover {
+  background: #ddd;
+}
+
+/* Round Arrow Button */
+.round-btn-right {
+  position: absolute;
+  bottom: 15px;
+  right: 15px;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background: #4a90e2;
+  color: #fff;
+  font-size: 1.2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.round-btn-right:hover {
+  background: #357abd;
+}
+.round-btn-left {
+  position: absolute;
+  bottom: 15px;
+  left: 15px;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background: #4a90e2;
+  color: #fff;
+  font-size: 1.2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.round-btn-left:hover {
+  background: #357abd;
+}
+/* ===== Search Box ===== */
+.search-box {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.search-box input {
+  flex: 1;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+}
+
+@media (max-width: 400px) {
+  .card { padding: 15px; }
+  #temperature { font-size: 1.5rem; }
+  .app-title, .page-title { font-size: 1.5rem; }
+}
+
+.btn:focus { outline: 2px solid #fff; outline-offset: 2px; }
