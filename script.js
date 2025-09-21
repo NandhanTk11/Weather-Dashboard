@@ -1,26 +1,34 @@
 import config from './config.js';
-const apiKey = config.apiKey;
 
-// Correct element references
-const weatherIcon = document.getElementById("weather-icon");
-const locationElem = document.getElementById("city-name");
-const temperatureElem = document.getElementById("temperature");
-const conditionElem = document.getElementById("condition");
-const messageElem = document.getElementById("caption");
-const dayDisplayElem = document.getElementById("day-display");
-const searchBtn = document.getElementById("searchBtn");
-const searchInput = document.getElementById("cityInput");
-const prevDayBtn = document.getElementById("prevDayBtn");
-const nextDayBtn = document.getElementById("nextDayBtn");
-//for travel.html
-const travelSearchBtn = document.getElementById("travelSearchBtn");
-const travelCityInput = document.getElementById("travelCityInput");
-const travelMessageElem = document.getElementById("travelMessage");
+// Constants
+const WEATHER_API_BASE_URL = 'https://api.openweathermap.org/data/2.5';
+const DEFAULT_CITY = 'Dubai';
 
+// DOM Elements
+const weatherElements = {
+  icon: document.getElementById("weather-icon"),
+  location: document.getElementById("city-name"),
+  temperature: document.getElementById("temperature"),
+  condition: document.getElementById("condition"),
+  message: document.getElementById("caption"),
+  dayDisplay: document.getElementById("day-display")
+};
+
+const controls = {
+  searchInput: document.getElementById("cityInput"),
+  searchBtn: document.getElementById("searchBtn"),
+  prevDayBtn: document.getElementById("prevDayBtn"),
+  nextDayBtn: document.getElementById("nextDayBtn")
+};
+// State
 let forecastData = null;
 let currentDayIndex = 0;
 
-// Helper function to group forecast by day
+/**
+ * Groups weather forecast data by day
+ * @param {Array} list - List of weather forecasts
+ * @returns {Object} Grouped forecasts by date
+ */
 function groupByDay(list) {
   const daily = {};
   list.forEach((entry) => {
@@ -31,7 +39,9 @@ function groupByDay(list) {
   return daily;
 }
 
-// Display weather information
+/**
+ * Displays weather information for the current day index
+ */
 function displayWeather() {
   if (!forecastData) return;
 
@@ -40,14 +50,18 @@ function displayWeather() {
   const todayData = dailyData[days[currentDayIndex]];
 
   if (!todayData) return;
+
+  // Update navigation buttons
+  controls.prevDayBtn.disabled = currentDayIndex === 0;
+  controls.nextDayBtn.disabled = currentDayIndex === days.length - 1;
   
   // Update day display
   if (currentDayIndex === 0) {
-    dayDisplayElem.textContent = "Today's Weather";
+    weatherElements.dayDisplay.textContent = "Today's Weather";
   } else {
     const date = new Date(days[currentDayIndex]);
     const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
-    dayDisplayElem.textContent = `${dayName}'s Weather`;
+    weatherElements.dayDisplay.textContent = `${dayName}'s Weather`;
   }
 
   // Take midday forecast if available
@@ -119,24 +133,29 @@ function displayWeather() {
   }
 }
 
-// Fetch weather for a specific city
+/**
+ * Fetches weather forecast for a specific city
+ * @param {string} city - Name of the city to fetch weather for
+ * @returns {Promise<void>}
+ */
 async function fetchWeather(city) {
   try {
+    weatherElements.message.textContent = 'Loading...';
     const response = await fetch(
-      `https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${apiKey}&units=metric`
+      `${WEATHER_API_BASE_URL}/forecast?q=${city}&appid=${config.apiKey}&units=metric`
     );
 
     if (!response.ok) {
-      alert("City not found!");
-      return;
+      throw new Error(response.status === 404 ? 'City not found!' : 'Failed to fetch weather data');
     }
 
     forecastData = await response.json();
     currentDayIndex = 0;
     displayWeather();
+    weatherElements.message.textContent = '';
   } catch (error) {
-    alert("Error fetching weather data!");
-    console.error(error);
+    weatherElements.message.textContent = error.message;
+    console.error('Weather fetch error:', error);
   }
 }
 
@@ -148,27 +167,31 @@ if (searchBtn && searchInput && prevDayBtn && nextDayBtn) {
   });
 
   // Search on Enter key
-  searchInput.addEventListener("keyup", (e) => {
-    if (e.key === "Enter") searchBtn.click();
-  });
+// Event Listeners
+controls.searchInput.addEventListener("keyup", (e) => {
+  if (e.key === "Enter") {
+    controls.searchBtn.click();
+  }
+});
 
-  // Previous day button
-  prevDayBtn.addEventListener("click", () => {
-    if (!forecastData) return;
-    const dailyData = groupByDay(forecastData.list);
-    if (currentDayIndex > 0) {
-      currentDayIndex--;
-      displayWeather();
-    }
-  });
+controls.searchBtn.addEventListener("click", () => {
+  const city = controls.searchInput.value.trim();
+  if (city) {
+    fetchWeather(city);
+  }
+});
 
-  // Next day button
-  nextDayBtn.addEventListener("click", () => {
-    if (!forecastData) return;
-    const dailyData = groupByDay(forecastData.list);
-    const days = Object.keys(dailyData);
-    if (currentDayIndex < days.length - 1) {
-      currentDayIndex++;
+controls.prevDayBtn.addEventListener("click", () => {
+  if (!forecastData || currentDayIndex <= 0) return;
+  currentDayIndex--;
+  displayWeather();
+});
+
+controls.nextDayBtn.addEventListener("click", () => {
+  if (!forecastData) return;
+  const days = Object.keys(groupByDay(forecastData.list));
+  if (currentDayIndex < days.length - 1) {
+    currentDayIndex++;
       displayWeather();
     }
   });
