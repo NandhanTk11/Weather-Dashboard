@@ -1,4 +1,5 @@
-const apiKey = "2ebf9ba85d8c3ff276a05856cb3bdae7"; // Replace with your OpenWeatherMap API key
+import config from './config.js';
+const apiKey = config.apiKey;
 
 // Correct element references
 const weatherIcon = document.getElementById("weather-icon");
