@@ -1,7 +1,16 @@
-# Configuration files
+# Environment variables
+.env
+
+# Config files with sensitive data
 config.js
 
-# Environment files
-.env
-.env.local
-.env.*.local
+# Dependencies
+node_modules/
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
