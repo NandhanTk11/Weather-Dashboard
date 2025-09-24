@@ -1,13 +1,5 @@
-
-import config from './config.js';
-const apiKey = config.apiKey;
-
-// API key validation
-if (!apiKey) {
-  console.error('Missing API key! Please check your config.js file.');
-  document.body.innerHTML = '<div style="text-align: center; padding: 20px; color: red;">⚠️ Configuration error: Missing API key</div>';
-  throw new Error('Missing API key');
-}
+// script.js (secure backend version)
+// NOTE: no apiKey here — all requests go through your backend
 
 // Correct element references
 const weatherIcon = document.getElementById("weather-icon");
@@ -20,7 +12,7 @@ const searchBtn = document.getElementById("searchBtn");
 const searchInput = document.getElementById("cityInput");
 const prevDayBtn = document.getElementById("prevDayBtn");
 const nextDayBtn = document.getElementById("nextDayBtn");
-//for travel.html
+// For travel.html
 const travelSearchBtn = document.getElementById("travelSearchBtn");
 const travelCityInput = document.getElementById("travelCityInput");
 const travelMessageElem = document.getElementById("travelMessage");
@@ -59,7 +51,7 @@ function displayWeather() {
   const todayData = dailyData[days[currentDayIndex]];
 
   if (!todayData) return;
-  
+
   // Update day display
   if (currentDayIndex === 0) {
     dayDisplayElem.textContent = "Today's Weather";
@@ -71,7 +63,7 @@ function displayWeather() {
 
   // Take midday forecast if available
   const weatherData = todayData[Math.floor(todayData.length / 2)] || todayData[0];
-  const { main, weather, dt } = weatherData;
+  const { main, weather } = weatherData;
   const condition = weather[0].main;
   const icon = weather[0].icon;
 
@@ -84,7 +76,7 @@ function displayWeather() {
   temperatureElem.textContent = `${Math.round(main.temp)}°C`;
   conditionElem.textContent = condition;
 
-  // Set custom weather message
+  // Custom weather messages
   let message = "";
   switch (condition) {
     case "Clear":
@@ -130,7 +122,7 @@ function displayWeather() {
 
   messageElem.textContent = message;
 
-  // Optional: Update travel suggestion dynamically
+  // Travel suggestion
   if (travelMessageElem) {
     if (condition === "Rain") travelMessageElem.textContent = "☔ Consider indoor activities!";
     else if (condition === "Snow") travelMessageElem.textContent = "❄ Perfect for snow sports!";
@@ -138,18 +130,15 @@ function displayWeather() {
   }
 }
 
-// Fetch weather for a specific city
-async function fetchWeather(city) {
+// Fetch forecast for a specific city
+async function fetchForecast(city) {
   try {
     showLoading(true);
     const encodedCity = encodeURIComponent(city);
-    
-    const response = await fetch(
-      `https://api.openweathermap.org/data/2.5/forecast?q=${encodedCity}&appid=${apiKey}&units=metric`
-    );
 
+    const response = await fetch(`/api/forecast?city=${encodedCity}`);
     if (!response.ok) {
-      throw new Error(response.status === 404 ? 'City not found!' : 'Failed to fetch weather data');
+      throw new Error(response.status === 404 ? "City not found!" : "Failed to fetch weather data");
     }
 
     forecastData = await response.json();
@@ -159,7 +148,7 @@ async function fetchWeather(city) {
   } catch (error) {
     showLoading(false);
     messageElem.textContent = error.message;
-    console.error('Weather fetch error:', error);
+    console.error("Weather fetch error:", error);
   }
 }
 
@@ -167,7 +156,7 @@ if (searchBtn && searchInput && prevDayBtn && nextDayBtn) {
   // Search button click
   searchBtn.addEventListener("click", () => {
     const city = searchInput.value.trim();
-    if (city) fetchWeather(city);
+    if (city) fetchForecast(city);
   });
 
   // Search on Enter key
@@ -178,7 +167,6 @@ if (searchBtn && searchInput && prevDayBtn && nextDayBtn) {
   // Previous day button
   prevDayBtn.addEventListener("click", () => {
     if (!forecastData) return;
-    const dailyData = groupByDay(forecastData.list);
     if (currentDayIndex > 0) {
       currentDayIndex--;
       displayWeather();
@@ -200,7 +188,7 @@ if (searchBtn && searchInput && prevDayBtn && nextDayBtn) {
 // Auto-load for current location
 window.addEventListener("load", () => {
   if (!navigator.geolocation) {
-    fetchWeather("Dubai");
+    fetchForecast("Dubai");
     return;
   }
 
@@ -208,33 +196,25 @@ window.addEventListener("load", () => {
     async (position) => {
       const { latitude, longitude } = position.coords;
       try {
-        const response = await fetch(
-          `https://api.openweathermap.org/data/2.5/forecast?lat=${latitude}&lon=${longitude}&appid=${apiKey}&units=metric`
-        );
+        const response = await fetch(`/api/forecast?lat=${latitude}&lon=${longitude}`);
         forecastData = await response.json();
         currentDayIndex = 0;
         displayWeather();
       } catch (error) {
-        fetchWeather("Mumbai");
+        fetchForecast("Mumbai");
       }
     },
     () => {
-      fetchWeather("Mumbai"); // fallback city
+      fetchForecast("Mumbai"); // fallback city
     }
   );
 });
 
-
-// Function to check travel suggestion
-// --- TRAVEL PAGE ONLY ---
-// --- TRAVEL PAGE ONLY ---
+// --- TRAVEL PAGE ---
 if (travelSearchBtn && travelCityInput && travelMessageElem) {
   async function checkTravel(city) {
     try {
-      const response = await fetch(
-        `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`
-      );
-
+      const response = await fetch(`/api/weather?city=${encodeURIComponent(city)}`);
       if (!response.ok) {
         travelMessageElem.innerHTML = "❌ City not found! Please try again.";
         return;
@@ -245,7 +225,7 @@ if (travelSearchBtn && travelCityInput && travelMessageElem) {
       const temp = Math.round(data.main.temp);
       const icon = data.weather[0].icon;
 
-      // Travel suggestion message
+      // Travel suggestion
       let suggestion = "";
       switch (condition) {
         case "Rain":
@@ -266,7 +246,6 @@ if (travelSearchBtn && travelCityInput && travelMessageElem) {
           suggestion = `ℹ Weather in ${city}: ${condition}. Plan accordingly.`;
       }
 
-      // Build HTML output
       travelMessageElem.innerHTML = `
         <div style="text-align:center;">
           <img src="https://openweathermap.org/img/wn/${icon}@2x.png" alt="${condition}">
@@ -275,19 +254,17 @@ if (travelSearchBtn && travelCityInput && travelMessageElem) {
           <p>${suggestion}</p>
         </div>
       `;
-     } catch (error) {
+    } catch (error) {
       travelMessageElem.textContent = "⚠ Error fetching weather data!";
       console.error(error);
-     }
+    }
   }
 
-  // Travel button click
   travelSearchBtn.addEventListener("click", () => {
     const city = travelCityInput.value.trim();
     if (city) checkTravel(city);
   });
 
-  // Enter key support
   travelCityInput.addEventListener("keyup", (e) => {
     if (e.key === "Enter") travelSearchBtn.click();
   });
