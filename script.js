@@ -1,11 +1,7 @@
 // ======== Configuration ========
-const BASE_URL = "https://weather-dashboard-pied-gamma.vercel.app"; 
-// ⬆️ Replace with your actual deployed Vercel URL after deployment
-// Example: "https://weather-dashboard-nandhanan.vercel.app/api"
+const BASE_URL = ""; // Relative path works locally and after deployment
 
 // ======== Helper Functions ========
-
-// Show/hide loading state
 function showLoading(show) {
   const icon = document.getElementById("weather-icon");
   const temp = document.getElementById("temperature");
@@ -19,10 +15,9 @@ function showLoading(show) {
   if (caption) caption.textContent = show ? 'Loading...' : caption.textContent;
 }
 
-// Group forecast entries by day
 function groupByDay(list) {
   const daily = {};
-  list.forEach((entry) => {
+  list.forEach(entry => {
     const date = entry.dt_txt.split(" ")[0];
     if (!daily[date]) daily[date] = [];
     daily[date].push(entry);
@@ -30,23 +25,11 @@ function groupByDay(list) {
   return daily;
 }
 
-// Find forecast closest to current time
 function getClosestForecast(forecasts) {
-  const now = Date.now() / 1000; // current UTC time in seconds
-  const closest = forecasts.reduce((prev, curr) =>
+  const now = Date.now() / 1000; // UTC seconds
+  return forecasts.reduce((prev, curr) =>
     Math.abs(curr.dt - now) < Math.abs(prev.dt - now) ? curr : prev
   );
-
-  const forecastTime = new Date(closest.dt * 1000).toUTCString();
-  console.log("Closest forecast selected:", {
-    dt: closest.dt,
-    forecastTimeUTC: forecastTime,
-    temp: closest.main.temp,
-    condition: closest.weather[0].main,
-    icon: closest.weather[0].icon
-  });
-
-  return closest;
 }
 
 // ======== WEATHER PAGE ========
@@ -65,7 +48,22 @@ if (document.getElementById("weather-icon")) {
   let forecastData = null;
   let currentDayIndex = 0;
 
-  // Display weather info
+  async function fetchWeather(city) {
+    try {
+      showLoading(true);
+      const res = await fetch(`${BASE_URL}/api/weather?city=${encodeURIComponent(city)}`);
+      if (!res.ok) throw new Error("Failed to fetch weather data");
+      forecastData = await res.json();
+      currentDayIndex = 0;
+      displayWeather();
+    } catch (err) {
+      console.error("Weather fetch error:", err);
+      if (messageElem) messageElem.textContent = "⚠ Unable to fetch weather. Try again.";
+    } finally {
+      showLoading(false);
+    }
+  }
+
   function displayWeather() {
     if (!forecastData) return;
 
@@ -74,19 +72,15 @@ if (document.getElementById("weather-icon")) {
     const todayData = dailyData[days[currentDayIndex]];
     if (!todayData) return;
 
-    if (currentDayIndex === 0) {
-      dayDisplayElem.textContent = "Today's Weather";
-    } else {
-      const date = new Date(days[currentDayIndex]);
-      const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
-      dayDisplayElem.textContent = `${dayName}'s Weather`;
-    }
+    dayDisplayElem.textContent =
+      currentDayIndex === 0
+        ? "Today's Weather"
+        : `${new Date(days[currentDayIndex]).toLocaleDateString('en-US', { weekday: 'long' })}'s Weather`;
 
     const weatherData = getClosestForecast(todayData);
     const { main, weather, dt } = weatherData;
     const condition = weather[0].main;
     const icon = weather[0].icon;
-
     const sunrise = forecastData.city.sunrise;
     const sunset = forecastData.city.sunset;
     const isDay = dt >= sunrise && dt < sunset;
@@ -98,98 +92,55 @@ if (document.getElementById("weather-icon")) {
 
     let message = "";
     switch (condition) {
-      case "Clear":
-        message = isDay ? "☀ It’s sunny, wear sunglasses!" : "🌙 Clear night sky, enjoy the stars!";
+      case "Clear": message = isDay ? "☀ It’s sunny, wear sunglasses!" : "🌙 Clear night sky!";
         break;
-      case "Clouds":
-        message = isDay ? "☁ Partly cloudy, still bright outside." : "☁🌙 Cloudy night, moon might be hidden.";
+      case "Clouds": message = isDay ? "☁ Partly cloudy." : "☁🌙 Cloudy night.";
         break;
-      case "Rain":
-        message = isDay ? "🌧 It’s raining, don’t forget your umbrella!" : "🌧🌙 Rainy night, drive safe!";
+      case "Rain": message = isDay ? "🌧 It’s raining!" : "🌧🌙 Rainy night.";
         break;
-      case "Drizzle":
-        message = isDay ? "🌦 Light drizzle, maybe carry an umbrella." : "🌦🌙 Drizzly night, roads may be slippery.";
+      case "Drizzle": message = isDay ? "🌦 Light drizzle." : "🌦🌙 Drizzly night.";
         break;
-      case "Thunderstorm":
-        message = "⛈ Stormy weather, better stay inside.";
+      case "Thunderstorm": message = "⛈ Stormy weather, stay safe!";
         break;
-      case "Snow":
-        message = isDay ? "❄ Snowfall, dress warmly!" : "❄🌙 Snowy night, roads may freeze.";
+      case "Snow": message = isDay ? "❄ Snowfall, dress warmly!" : "❄🌙 Snowy night.";
         break;
-      default:
-        message = "ℹ Weather updates available, stay prepared.";
+      default: message = "ℹ Weather updates available.";
     }
-
     messageElem.textContent = message;
   }
 
-  // Fetch weather for a city
-  async function fetchWeather(city) {
-    try {
-      showLoading(true);
-      const encodedCity = encodeURIComponent(city);
-      const response = await fetch(`${BASE_URL}/weather?city=${encodedCity}`);
-
-      if (!response.ok) throw new Error('Failed to fetch weather data');
-
-      forecastData = await response.json();
-      currentDayIndex = 0;
-      displayWeather();
-    } catch (error) {
-      console.error("Weather fetch error:", error);
-      if (messageElem) messageElem.textContent = "⚠ Unable to fetch weather. Try again.";
-    } finally {
-      showLoading(false);
-    }
-  }
-
-  // Button actions
   searchBtn.addEventListener("click", () => {
     const city = searchInput.value.trim();
     if (city) fetchWeather(city);
   });
 
-  searchInput.addEventListener("keyup", (e) => {
+  searchInput.addEventListener("keyup", e => {
     if (e.key === "Enter") searchBtn.click();
   });
 
   prevDayBtn.addEventListener("click", () => {
     if (!forecastData) return;
-    const dailyData = groupByDay(forecastData.list);
-    if (currentDayIndex > 0) {
-      currentDayIndex--;
-      displayWeather();
-    }
+    if (currentDayIndex > 0) { currentDayIndex--; displayWeather(); }
   });
 
   nextDayBtn.addEventListener("click", () => {
     if (!forecastData) return;
-    const dailyData = groupByDay(forecastData.list);
-    const days = Object.keys(dailyData);
-    if (currentDayIndex < days.length - 1) {
-      currentDayIndex++;
-      displayWeather();
-    }
+    const days = Object.keys(groupByDay(forecastData.list));
+    if (currentDayIndex < days.length - 1) { currentDayIndex++; displayWeather(); }
   });
 
   // Auto-load current location
   window.addEventListener("load", () => {
-    if (!navigator.geolocation) {
-      fetchWeather("Dubai");
-      return;
-    }
-
+    if (!navigator.geolocation) { fetchWeather("Dubai"); return; }
     navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
+      async ({ coords }) => {
         try {
-          const response = await fetch(`${BASE_URL}/weather/coords?lat=${latitude}&lon=${longitude}`);
-          forecastData = await response.json();
+          const res = await fetch(`${BASE_URL}/api/weather/coords?lat=${coords.latitude}&lon=${coords.longitude}`);
+          if (!res.ok) throw new Error();
+          forecastData = await res.json();
           currentDayIndex = 0;
           displayWeather();
-        } catch {
-          fetchWeather("Mumbai");
-        }
+        } catch { fetchWeather("Mumbai"); }
       },
       () => fetchWeather("Mumbai")
     );
@@ -204,36 +155,25 @@ if (document.getElementById("travelSearchBtn")) {
 
   async function checkTravel(city) {
     try {
-      const response = await fetch(`${BASE_URL}/weather?city=${city}`);
-
-      if (!response.ok) {
-        travelMessageElem.innerHTML = "❌ City not found! Please try again.";
-        return;
-      }
-
-      const data = await response.json();
+      const res = await fetch(`${BASE_URL}/api/weather?city=${encodeURIComponent(city)}`);
+      if (!res.ok) { travelMessageElem.innerHTML = "❌ City not found!"; return; }
+      const data = await res.json();
       const condition = data.list[0].weather[0].main;
       const temp = Math.round(data.list[0].main.temp);
       const icon = data.list[0].weather[0].icon;
 
       let suggestion = "";
       switch (condition) {
-        case "Rain":
-        case "Drizzle":
-        case "Thunderstorm":
-          suggestion = `🌧 Too rainy in ${city}, consider another day.`;
-          break;
+        case "Rain": case "Drizzle": case "Thunderstorm":
+          suggestion = `🌧 Too rainy in ${city}, consider another day.`; break;
         case "Snow":
-          suggestion = `❄ Snowy in ${city}, perfect for winter sports!`;
-          break;
+          suggestion = `❄ Snowy in ${city}, perfect for winter sports!`; break;
         case "Clear":
-          suggestion = `☀ Clear skies in ${city}, perfect for travel!`;
-          break;
+          suggestion = `☀ Clear skies in ${city}, perfect for travel!`; break;
         case "Clouds":
-          suggestion = `☁ Cloudy in ${city}, still fine for travel.`;
-          break;
+          suggestion = `☁ Cloudy in ${city}, still fine for travel.`; break;
         default:
-          suggestion = `ℹ Weather in ${city}: ${condition}. Plan accordingly.`;
+          suggestion = `ℹ Weather in ${city}: ${condition}.`;
       }
 
       travelMessageElem.innerHTML = `
@@ -244,9 +184,9 @@ if (document.getElementById("travelSearchBtn")) {
           <p>${suggestion}</p>
         </div>
       `;
-    } catch (error) {
-      travelMessageElem.textContent = "⚠ Error fetching weather data!";
-      console.error(error);
+    } catch (err) {
+      travelMessageElem.textContent = "⚠ Error fetching weather!";
+      console.error(err);
     }
   }
 
@@ -255,7 +195,7 @@ if (document.getElementById("travelSearchBtn")) {
     if (city) checkTravel(city);
   });
 
-  travelCityInput.addEventListener("keyup", (e) => {
+  travelCityInput.addEventListener("keyup", e => {
     if (e.key === "Enter") travelSearchBtn.click();
   });
 }
