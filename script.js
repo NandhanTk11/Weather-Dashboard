@@ -1,5 +1,6 @@
 // ======== Configuration ========
-const BASE_URL = ""; // Relative path works locally and after deployment
+const BASE_URL = "https://weather-dashboard-iota-six.vercel.app/api";
+ // Relative path works locally and after deployment
 
 // ======== Helper Functions ========
 function showLoading(show) {

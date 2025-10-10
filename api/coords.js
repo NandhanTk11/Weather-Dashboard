@@ -1,13 +1,13 @@
 import fetch from "node-fetch";
 
 export default async function handler(req, res) {
-  const city = req.query.city;
-  if (!city) return res.status(400).json({ error: "City required" });
+  const { lat, lon } = req.query;
+  if (!lat || !lon) return res.status(400).json({ error: "lat and lon required" });
 
   const apiKey = process.env.WEATHER_API_KEY;
   if (!apiKey) return res.status(500).json({ error: "Missing API key" });
 
-  const url = `https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(city)}&appid=${apiKey}&units=metric`;
+  const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`;
 
   try {
     const response = await fetch(url);
