@@ -1,5 +1,5 @@
 // ======== Configuration ========
-const BASE_URL = "https://your-vercel-app-name.vercel.app/api"; 
+const BASE_URL = "https://weather-dashboard-pied-gamma.vercel.app"; 
 // ⬆️ Replace with your actual deployed Vercel URL after deployment
 // Example: "https://weather-dashboard-nandhanan.vercel.app/api"
 
