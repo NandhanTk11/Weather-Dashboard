@@ -1,6 +1,6 @@
 // ======== Configuration ========
-const BASE_URL = "https://weather-dashboard-iota-six.vercel.app/api";
- // Relative path works locally and after deployment
+const BASE_URL = "https://weather-dashboard-iota-six.vercel.app/api"; 
+// Relative path works locally and after deployment
 
 // ======== Helper Functions ========
 function showLoading(show) {
@@ -52,7 +52,7 @@ if (document.getElementById("weather-icon")) {
   async function fetchWeather(city) {
     try {
       showLoading(true);
-      const res = await fetch(`${BASE_URL}/api/weather?city=${encodeURIComponent(city)}`);
+      const res = await fetch(`${BASE_URL}/weather?city=${encodeURIComponent(city)}`);
       if (!res.ok) throw new Error("Failed to fetch weather data");
       forecastData = await res.json();
       currentDayIndex = 0;
@@ -93,18 +93,12 @@ if (document.getElementById("weather-icon")) {
 
     let message = "";
     switch (condition) {
-      case "Clear": message = isDay ? "☀ It’s sunny, wear sunglasses!" : "🌙 Clear night sky!";
-        break;
-      case "Clouds": message = isDay ? "☁ Partly cloudy." : "☁🌙 Cloudy night.";
-        break;
-      case "Rain": message = isDay ? "🌧 It’s raining!" : "🌧🌙 Rainy night.";
-        break;
-      case "Drizzle": message = isDay ? "🌦 Light drizzle." : "🌦🌙 Drizzly night.";
-        break;
-      case "Thunderstorm": message = "⛈ Stormy weather, stay safe!";
-        break;
-      case "Snow": message = isDay ? "❄ Snowfall, dress warmly!" : "❄🌙 Snowy night.";
-        break;
+      case "Clear": message = isDay ? "☀ It’s sunny, wear sunglasses!" : "🌙 Clear night sky!"; break;
+      case "Clouds": message = isDay ? "☁ Partly cloudy." : "☁🌙 Cloudy night."; break;
+      case "Rain": message = isDay ? "🌧 It’s raining!" : "🌧🌙 Rainy night."; break;
+      case "Drizzle": message = isDay ? "🌦 Light drizzle." : "🌦🌙 Drizzly night."; break;
+      case "Thunderstorm": message = "⛈ Stormy weather, stay safe!"; break;
+      case "Snow": message = isDay ? "❄ Snowfall, dress warmly!" : "❄🌙 Snowy night."; break;
       default: message = "ℹ Weather updates available.";
     }
     messageElem.textContent = message;
@@ -136,7 +130,7 @@ if (document.getElementById("weather-icon")) {
     navigator.geolocation.getCurrentPosition(
       async ({ coords }) => {
         try {
-          const res = await fetch(`${BASE_URL}/api/weather/coords?lat=${coords.latitude}&lon=${coords.longitude}`);
+          const res = await fetch(`${BASE_URL}/weather/coords?lat=${coords.latitude}&lon=${coords.longitude}`);
           if (!res.ok) throw new Error();
           forecastData = await res.json();
           currentDayIndex = 0;
@@ -156,7 +150,7 @@ if (document.getElementById("travelSearchBtn")) {
 
   async function checkTravel(city) {
     try {
-      const res = await fetch(`${BASE_URL}/api/weather?city=${encodeURIComponent(city)}`);
+      const res = await fetch(`${BASE_URL}/weather?city=${encodeURIComponent(city)}`);
       if (!res.ok) { travelMessageElem.innerHTML = "❌ City not found!"; return; }
       const data = await res.json();
       const condition = data.list[0].weather[0].main;
@@ -165,16 +159,11 @@ if (document.getElementById("travelSearchBtn")) {
 
       let suggestion = "";
       switch (condition) {
-        case "Rain": case "Drizzle": case "Thunderstorm":
-          suggestion = `🌧 Too rainy in ${city}, consider another day.`; break;
-        case "Snow":
-          suggestion = `❄ Snowy in ${city}, perfect for winter sports!`; break;
-        case "Clear":
-          suggestion = `☀ Clear skies in ${city}, perfect for travel!`; break;
-        case "Clouds":
-          suggestion = `☁ Cloudy in ${city}, still fine for travel.`; break;
-        default:
-          suggestion = `ℹ Weather in ${city}: ${condition}.`;
+        case "Rain": case "Drizzle": case "Thunderstorm": suggestion = `🌧 Too rainy in ${city}, consider another day.`; break;
+        case "Snow": suggestion = `❄ Snowy in ${city}, perfect for winter sports!`; break;
+        case "Clear": suggestion = `☀ Clear skies in ${city}, perfect for travel!`; break;
+        case "Clouds": suggestion = `☁ Cloudy in ${city}, still fine for travel.`; break;
+        default: suggestion = `ℹ Weather in ${city}: ${condition}.`;
       }
 
       travelMessageElem.innerHTML = `
