@@ -39,7 +39,7 @@ It uses the **OpenWeatherMap API** to fetch **real-time weather data** and provi
 
 1. Clone the repo:
    ```bash
-   git clone https://github.com/your-username/weather-app.git
+   git clone https://github.com/NandhanTk11/Weather-Dashboard.git
    cd weather-app
 
 
