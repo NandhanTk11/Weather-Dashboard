@@ -22,7 +22,6 @@ It uses the **OpenWeatherMap API** to fetch **real-time weather data** and provi
 |-----------|----------------------|
 | Frontend | HTML5, CSS3, JavaScript (ES6) |
 | API | [OpenWeatherMap API](https://openweathermap.org/api) |
-| Hosting | GitHub Pages |
 | Optional Backend | Node.js / Express (for secure API key proxy) |
 
 ---
