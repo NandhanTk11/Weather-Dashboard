@@ -1,0 +1,3 @@
+[build]
+  functions = "netlify/functions"
+  publish = "."  # Change to "dist" if your HTML/CSS/JS are in a dist folder
