@@ -1,30 +1,19 @@
-
-const apiKey = "Your_api_here"; // Replace with your OpenWeatherMap API key
 // ======== Helper Functions ====
-
-// Show/hide loading state
-let oldCaption = "";
-
 function showLoading(show) {
   const icon = document.getElementById("weather-icon");
   const temp = document.getElementById("temperature");
   const condition = document.getElementById("condition");
   const caption = document.getElementById("caption");
-[icon, temp, condition].forEach(el => {
+  [icon, temp, condition, caption].forEach(el => {
     if (el) el.style.opacity = show ? "0.5" : "1";
   });
 
-  if (caption) {
-    if (show) {
-      oldCaption = caption.textContent;
-      caption.textContent = "Loading...";
-    } else {
-      caption.textContent = oldCaption || "";
-    }
+  // Only set "Loading..." for caption if show is true and caption exists
+  if (caption && show) {
+    caption.textContent = "Loading...";
   }
 }
 
-// Group forecast entries by day
 function groupByDay(list) {
   const daily = {};
   list.forEach((entry) => {
@@ -35,21 +24,45 @@ function groupByDay(list) {
   return daily;
 }
 
-// Find forecast closest to current time
-function getClosestForecast(forecasts) {
-  const now = Date.now() / 1000; // current UTC time in seconds
-  const closest = forecasts.reduce((prev, curr) =>
-    Math.abs(curr.dt - now) < Math.abs(prev.dt - now) ? curr : prev
-  );
+function getClosestForecast(forecasts, selectedDate) {
+  // Target 12:00 PM UTC, fallback to 15:00 or 9:00
+  const targetHours = [12, 15, 9];
+  let closest = null;
+  let minDiff = Infinity;
 
-  // Debug log
+  // Log all forecasts for debugging
+  console.log("All forecasts for day:", selectedDate, forecasts.map(f => ({
+    dt_txt: f.dt_txt,
+    hour: new Date(f.dt * 1000).getUTCHours(),
+    dt: f.dt,
+    isDay: f.weather[0].icon.includes('d')
+  })));
+
+  // Try each target hour
+  for (const targetHour of targetHours) {
+    const targetTime = new Date(`${selectedDate}T${targetHour.toString().padStart(2, '0')}:00:00Z`).getTime() / 1000;
+    const candidate = forecasts.reduce((prev, curr) => {
+      const diff = Math.abs(curr.dt - targetTime);
+      return diff < Math.abs(prev.dt - targetTime) ? curr : prev;
+    });
+    const diff = Math.abs(candidate.dt - targetTime);
+    if (diff < minDiff) {
+      minDiff = diff;
+      closest = candidate;
+    }
+  }
+
+  // Debug log for selected forecast
   const forecastTime = new Date(closest.dt * 1000).toUTCString();
-  console.log("Closest forecast selected:", {
+  const forecastHour = new Date(closest.dt * 1000).getUTCHours();
+  console.log("Selected forecast:", {
     dt: closest.dt,
     forecastTimeUTC: forecastTime,
+    forecastHourUTC: forecastHour,
     temp: closest.main.temp,
     condition: closest.weather[0].main,
-    icon: closest.weather[0].icon
+    icon: closest.weather[0].icon,
+    isDay: closest.weather[0].icon.includes('d')
   });
 
   return closest;
@@ -71,16 +84,20 @@ if (document.getElementById("weather-icon")) {
   let forecastData = null;
   let currentDayIndex = 0;
 
-  // Display weather info
   function displayWeather() {
-    if (!forecastData) return;
+    if (!forecastData || !messageElem) {
+      console.error("displayWeather: forecastData or messageElem missing", { forecastData, messageElem });
+      return;
+    }
 
     const dailyData = groupByDay(forecastData.list);
     const days = Object.keys(dailyData);
     const todayData = dailyData[days[currentDayIndex]];
-    if (!todayData) return;
+    if (!todayData) {
+      console.error("displayWeather: No data for selected day", { currentDayIndex, days });
+      return;
+    }
 
-    // Update day display
     if (currentDayIndex === 0) {
       dayDisplayElem.textContent = "Today's Weather";
     } else {
@@ -89,23 +106,19 @@ if (document.getElementById("weather-icon")) {
       dayDisplayElem.textContent = `${dayName}'s Weather`;
     }
 
-    // Pick forecast closest to now
-    const weatherData = getClosestForecast(todayData);
-    const { main, weather, dt } = weatherData;
-    const condition = weather[0].main;
-    const icon = weather[0].icon;
+    const selectedDate = days[currentDayIndex];
+    const weatherData = getClosestForecast(todayData, selectedDate);
+    const { main, weather } = weatherData;
+    const condition = weather[0].main || "Unknown";
+    const icon = weather[0].icon || "01d";
 
-    const sunrise = forecastData.city.sunrise;
-    const sunset = forecastData.city.sunset;
-    const isDay = dt >= sunrise && dt < sunset;
+    const isDay = icon.includes('d');
 
-    // Update UI
     weatherIcon.src = `https://openweathermap.org/img/wn/${icon}@2x.png`;
-    locationElem.textContent = forecastData.city.name;
+    locationElem.textContent = forecastData.city.name || "Unknown City";
     temperatureElem.textContent = `${Math.round(main.temp)}°C`;
     conditionElem.textContent = condition;
 
-    // Weather message
     let message = "";
     switch (condition) {
       case "Clear":
@@ -127,21 +140,23 @@ if (document.getElementById("weather-icon")) {
         message = isDay ? "❄ Snowfall, dress warmly!" : "❄🌙 Snowy night, roads may freeze.";
         break;
       default:
-        message = "ℹ Weather updates available, stay prepared.";
+        message = `ℹ Weather in ${forecastData.city.name}: ${condition}. Plan accordingly.`;
     }
 
     messageElem.textContent = message;
   }
 
-  // Fetch weather for a city
-  async function fetchWeather(city) {
+  async function fetchWeather(city, lat, lon) {
     try {
       showLoading(true);
-      const encodedCity = encodeURIComponent(city);
-      const response = await fetch(
-        `https://api.openweathermap.org/data/2.5/forecast?q=${encodedCity}&appid=${apiKey}&units=metric`
-      );
+      let url;
+      if (city) {
+        url = `/.netlify/functions/getForecast?city=${encodeURIComponent(city)}`;
+      } else {
+        url = `/.netlify/functions/getForecast?lat=${lat}&lon=${lon}`;
+      }
 
+      const response = await fetch(url);
       if (!response.ok) throw new Error('Failed to fetch weather data');
 
       forecastData = await response.json();
@@ -155,7 +170,6 @@ if (document.getElementById("weather-icon")) {
     }
   }
 
-  // Button actions
   searchBtn.addEventListener("click", () => {
     const city = searchInput.value.trim();
     if (city) fetchWeather(city);
@@ -184,7 +198,6 @@ if (document.getElementById("weather-icon")) {
     }
   });
 
-  // Auto-load current location
   window.addEventListener("load", () => {
     if (!navigator.geolocation) {
       fetchWeather("Dubai");
@@ -195,12 +208,7 @@ if (document.getElementById("weather-icon")) {
       async (position) => {
         const { latitude, longitude } = position.coords;
         try {
-          const response = await fetch(
-            `https://api.openweathermap.org/data/2.5/forecast?lat=${latitude}&lon=${longitude}&appid=${apiKey}&units=metric`
-          );
-          forecastData = await response.json();
-          currentDayIndex = 0;
-          displayWeather();
+          await fetchWeather(null, latitude, longitude);
         } catch {
           fetchWeather("Mumbai");
         }
@@ -218,10 +226,7 @@ if (document.getElementById("travelSearchBtn")) {
 
   async function checkTravel(city) {
     try {
-      const response = await fetch(
-        `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`
-      );
-
+      const response = await fetch(`/.netlify/functions/getCurrentWeather?city=${encodeURIComponent(city)}`);
       if (!response.ok) {
         travelMessageElem.innerHTML = "❌ City not found! Please try again.";
         return;
